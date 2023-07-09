@@ -11,6 +11,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
+
 #ifdef WIN32
 #include <windows.h>
 #include <process.h>

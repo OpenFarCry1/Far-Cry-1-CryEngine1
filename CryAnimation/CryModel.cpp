@@ -76,7 +76,7 @@ CryModel::~CryModel()
 #ifndef UNIQUE_VERT_BUFF_PER_INSTANCE
 		// the default model state is the only one where the leaf buffers must be deleted.
 		// if the vertex buffers are unique per modelstate, then they're deleted by the modelstate destructor
-		m_pDefaultModelState->DeleteLeafBuffers();
+		//m_pDefaultModelState->DeleteLeafBuffers();
 #endif
 		delete m_pDefaultModelState;
 		m_pDefaultModelState=0;

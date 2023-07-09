@@ -30,7 +30,7 @@ The DXRenderer interface Class
 #else
 // Base class
 #include <d3dx9.h>
-#include <dxerr9.h>
+#include <dxerr.h>
 #endif
 
 //=======================================================================
@@ -348,6 +348,8 @@ struct SD3DRenderTarget
 
 //======================================================================
 /// Direct3D Render driver class
+
+class IEntityRender;
 
 class CD3D9Renderer : public CRenderer
 {
@@ -1780,7 +1782,7 @@ public:
 
   static void CalcMipsAndSize(STexPic *ti);
 
-  static BindNULL(int From)
+  static void BindNULL(int From)
   {
     int n = CTexMan::m_nCurStages;
     CTexMan::m_nCurStages = From;

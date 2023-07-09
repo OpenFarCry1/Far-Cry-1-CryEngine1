@@ -915,7 +915,7 @@ void CXKeyboard::SetupKeyNames()
 	int nResult;
 	unsigned int vKeyCode;
 
-	for (k=0;k<256;k++)
+	for (int k=0;k<256;k++)
 	{
 		vKeyCode = MapVirtualKeyEx( k, 1, GetKeyboardLayout(0) );
 

@@ -23,6 +23,13 @@
 	#include "WinBase.h"
 #endif
 
+#ifdef USING_CRY_MEMORY_MANAGER
+//#if !defined(LINUX)
+_ACCESS_POOL
+//#endif
+#endif
+
+
 //////////////////////////////////////////////////////////////////////////
 // Globals.
 //////////////////////////////////////////////////////////////////////////
@@ -32,8 +39,10 @@ int g_CpuFlags;
 double g_SecondsPerCycle;
 
 #ifndef _XBOX
-#include <CrtDebugStats.h>
+//#include <CrtDebugStats.h>
 #endif
+
+//HANDLE __crtheap;
 
 // per-frame profilers: collect the infromation for each frame for 
 // displaying statistics at the beginning of each frame

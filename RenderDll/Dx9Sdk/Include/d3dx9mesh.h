@@ -103,12 +103,52 @@ enum _MAX_FVF_DECL_SIZE
     MAX_FVF_DECL_SIZE = MAXD3DDECLLENGTH + 1 // +1 for END
 };
 
+typedef enum _D3DXTANGENT
+{
+    D3DXTANGENT_WRAP_U =                    0x01,
+    D3DXTANGENT_WRAP_V =                    0x02,
+    D3DXTANGENT_WRAP_UV =                   0x03,
+    D3DXTANGENT_DONT_NORMALIZE_PARTIALS =   0x04,
+    D3DXTANGENT_DONT_ORTHOGONALIZE =        0x08,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_V =      0x010,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_U =      0x020,
+    D3DXTANGENT_WEIGHT_BY_AREA =            0x040,
+    D3DXTANGENT_WEIGHT_EQUAL =              0x080,
+    D3DXTANGENT_WIND_CW =                   0x0100,
+    D3DXTANGENT_CALCULATE_NORMALS =         0x0200,
+    D3DXTANGENT_GENERATE_IN_PLACE =         0x0400,
+} D3DXTANGENT;
+
+// D3DXIMT_WRAP_U means the texture wraps in the U direction
+// D3DXIMT_WRAP_V means the texture wraps in the V direction
+// D3DXIMT_WRAP_UV means the texture wraps in both directions
+typedef enum _D3DXIMT
+{
+    D3DXIMT_WRAP_U =                    0x01,
+    D3DXIMT_WRAP_V =                    0x02,
+    D3DXIMT_WRAP_UV =                   0x03,
+} D3DXIMT;
+
+// These options are only valid for UVAtlasCreate and UVAtlasPartition, we may add more for UVAtlasPack if necessary
+// D3DXUVATLAS_DEFAULT - Meshes with more than 25k faces go through fast, meshes with fewer than 25k faces go through quality
+// D3DXUVATLAS_GEODESIC_FAST - Uses approximations to improve charting speed at the cost of added stretch or more charts.
+// D3DXUVATLAS_GEODESIC_QUALITY - Provides better quality charts, but requires more time and memory than fast.
+typedef enum _D3DXUVATLAS
+{
+    D3DXUVATLAS_DEFAULT               = 0x00,
+    D3DXUVATLAS_GEODESIC_FAST         = 0x01,
+    D3DXUVATLAS_GEODESIC_QUALITY      = 0x02,
+} D3DXUVATLAS;
+
 typedef struct ID3DXBaseMesh *LPD3DXBASEMESH;
 typedef struct ID3DXMesh *LPD3DXMESH;
 typedef struct ID3DXPMesh *LPD3DXPMESH;
 typedef struct ID3DXSPMesh *LPD3DXSPMESH;
 typedef struct ID3DXSkinInfo *LPD3DXSKININFO;
 typedef struct ID3DXPatchMesh *LPD3DXPATCHMESH;
+typedef interface ID3DXTextureGutterHelper *LPD3DXTEXTUREGUTTERHELPER;
+typedef interface ID3DXPRTBuffer *LPD3DXPRTBUFFER;
+
 
 typedef struct _D3DXATTRIBUTERANGE
 {
@@ -1056,6 +1096,26 @@ BOOL WINAPI
         CONST D3DXVECTOR3 *pRayDirection);
 
 
+HRESULT WINAPI D3DXComputeTangentFrame(ID3DXMesh *pMesh,
+                                       DWORD dwOptions);
+
+HRESULT WINAPI D3DXComputeTangentFrameEx(ID3DXMesh *pMesh,
+                                         DWORD dwTextureInSemantic,
+                                         DWORD dwTextureInIndex,
+                                         DWORD dwUPartialOutSemantic,
+                                         DWORD dwUPartialOutIndex,
+                                         DWORD dwVPartialOutSemantic,
+                                         DWORD dwVPartialOutIndex,
+                                         DWORD dwNormalOutSemantic,
+                                         DWORD dwNormalOutIndex,
+                                         DWORD dwOptions,
+                                         CONST DWORD *pdwAdjacency,
+                                         FLOAT fPartialEdgeThreshold,
+                                         FLOAT fSingularPointThreshold,
+                                         FLOAT fNormalEdgeThreshold,
+                                         ID3DXMesh **ppMeshOut,
+                                         ID3DXBuffer **ppVertexMapping);
+
 
 //D3DXComputeTangent
 //
@@ -1079,6 +1139,307 @@ HRESULT WINAPI D3DXComputeTangent(LPD3DXMESH Mesh,
                                  DWORD BinormIndex,
                                  DWORD Wrap,
                                  CONST DWORD *pAdjacency);
+
+//============================================================================
+//
+// UVAtlas apis
+//
+//============================================================================
+typedef HRESULT (WINAPI *LPD3DXUVATLASCB)(FLOAT fPercentDone,  LPVOID lpUserContext);
+
+// This function creates atlases for meshes. There are two modes of operation,
+// either based on the number of charts, or the maximum allowed stretch. If the
+// maximum allowed stretch is 0, then each triangle will likely be in its own
+// chart.
+
+//
+// The parameters are as follows:
+//  pMesh - Input mesh to calculate an atlas for. This must have a position
+//          channel and at least a 2-d texture channel.
+//  uMaxChartNumber - The maximum number of charts required for the atlas.
+//                    If this is 0, it will be parameterized based solely on
+//                    stretch.
+//  fMaxStretch - The maximum amount of stretch, if 0, no stretching is allowed,
+//                if 1, then any amount of stretching is allowed.
+//  uWidth - The width of the texture the atlas will be used on.
+//  uHeight - The height of the texture the atlas will be used on.
+//  fGutter - The minimum distance, in texels between two charts on the atlas.
+//            this gets scaled by the width, so if fGutter is 2.5, and it is
+//            used on a 512x512 texture, then the minimum distance will be
+//            2.5 / 512 in u-v space.
+//  dwTextureIndex - Specifies which texture coordinate to write to in the
+//                   output mesh (which is cloned from the input mesh). Useful
+//                   if your vertex has multiple texture coordinates.
+//  pdwAdjacency - a pointer to an array with 3 DWORDs per face, indicating
+//                 which triangles are adjacent to each other.
+//  pdwFalseEdgeAdjacency - a pointer to an array with 3 DWORDS per face, indicating
+//                          at each face, whether an edge is a false edge or not (using
+//                          the same ordering as the adjacency data structure). If this
+//                          is NULL, then it is assumed that there are no false edges. If
+//                          not NULL, then a non-false edge is indicated by -1 and a false
+//                          edge is indicated by any other value (it is not required, but
+//                          it may be useful for the caller to use the original adjacency
+//                          value). This allows you to parameterize a mesh of quads, and
+//                          the edges down the middle of each quad will not be cut when
+//                          parameterizing the mesh.
+//  pfIMTArray - a pointer to an array with 3 FLOATs per face, describing the
+//               integrated metric tensor for that face. This lets you control
+//               the way this triangle may be stretched in the atlas. The IMT
+//               passed in will be 3 floats (a,b,c) and specify a symmetric
+//               matrix (a b) that, given a vector (s,t), specifies the 
+//                      (b c)
+//               distance between a vector v1 and a vector v2 = v1 + (s,t) as
+//               sqrt((s, t) * M * (s, t)^T).
+//               In other words, this lets one specify the magnitude of the
+//               stretch in an arbitrary direction in u-v space. For example
+//               if a = b = c = 1, then this scales the vector (1,1) by 2, and
+//               the vector (1,-1) by 0. Note that this is multiplying the edge
+//               length by the square of the matrix, so if you want the face to
+//               stretch to twice its
+//               size with no shearing, the IMT value should be (2, 0, 2), which
+//               is just the identity matrix times 2.
+//               Note that this assumes you have an orientation for the triangle
+//               in some 2-D space. For D3DXUVAtlas, this space is created by
+//               letting S be the direction from the first to the second
+//               vertex, and T be the cross product between the normal and S.
+//               
+//  pStatusCallback - Since the atlas creation process can be very CPU intensive,
+//                    this allows the programmer to specify a function to be called
+//                    periodically, similarly to how it is done in the PRT simulation
+//                    engine.
+//  fCallbackFrequency - This lets you specify how often the callback will be
+//                       called. A decent default should be 0.0001f.
+//  pUserContext - a void pointer to be passed back to the callback function
+//  dwOptions - A combination of flags in the D3DXUVATLAS enum
+//  ppMeshOut - A pointer to a location to store a pointer for the newly created
+//              mesh.
+//  ppFacePartitioning - A pointer to a location to store a pointer for an array,
+//                       one DWORD per face, giving the final partitioning
+//                       created by the atlasing algorithm.
+//  ppVertexRemapArray - A pointer to a location to store a pointer for an array,
+//                       one DWORD per vertex, giving the vertex it was copied
+//                       from, if any vertices needed to be split.
+//  pfMaxStretchOut - A location to store the maximum stretch resulting from the
+//                    atlasing algorithm.
+//  puNumChartsOut - A location to store the number of charts created, or if the
+//                   maximum number of charts was too low, this gives the minimum
+//                    number of charts needed to create an atlas.
+
+HRESULT WINAPI D3DXUVAtlasCreate(LPD3DXMESH pMesh,
+                                 UINT uMaxChartNumber,
+                                 FLOAT fMaxStretch,
+                                 UINT uWidth,
+                                 UINT uHeight,
+                                 FLOAT fGutter,
+                                 DWORD dwTextureIndex,
+                                 CONST DWORD *pdwAdjacency,
+                                 CONST DWORD *pdwFalseEdgeAdjacency,
+                                 CONST FLOAT *pfIMTArray,
+                                 LPD3DXUVATLASCB pStatusCallback,
+                                 FLOAT fCallbackFrequency,
+                                 LPVOID pUserContext,
+                                 DWORD dwOptions,
+                                 LPD3DXMESH *ppMeshOut,
+                                 LPD3DXBUFFER *ppFacePartitioning,
+                                 LPD3DXBUFFER *ppVertexRemapArray,
+                                 FLOAT *pfMaxStretchOut,
+                                 UINT *puNumChartsOut);
+
+// This has the same exact arguments as Create, except that it does not perform the
+// final packing step. This method allows one to get a partitioning out, and possibly
+// modify it before sending it to be repacked. Note that if you change the
+// partitioning, you'll also need to calculate new texture coordinates for any faces
+// that have switched charts.
+//
+// The partition result adjacency output parameter is meant to be passed to the
+// UVAtlasPack function, this adjacency cuts edges that are between adjacent
+// charts, and also can include cuts inside of a chart in order to make it
+// equivalent to a disc. For example:
+//
+// _______
+// | ___ |
+// | |_| |
+// |_____|
+//
+// In order to make this equivalent to a disc, we would need to add a cut, and it
+// Would end up looking like:
+// _______
+// | ___ |
+// | |_|_|
+// |_____|
+//
+// The resulting partition adjacency parameter cannot be NULL, because it is
+// required for the packing step.
+
+
+
+HRESULT WINAPI D3DXUVAtlasPartition(LPD3DXMESH pMesh,
+                                    UINT uMaxChartNumber,
+                                    FLOAT fMaxStretch,
+                                    DWORD dwTextureIndex,
+                                    CONST DWORD *pdwAdjacency,
+                                    CONST DWORD *pdwFalseEdgeAdjacency,
+                                    CONST FLOAT *pfIMTArray,
+                                    LPD3DXUVATLASCB pStatusCallback,
+                                    FLOAT fCallbackFrequency,
+                                    LPVOID pUserContext,
+                                    DWORD dwOptions,
+                                    LPD3DXMESH *ppMeshOut,
+                                    LPD3DXBUFFER *ppFacePartitioning,
+                                    LPD3DXBUFFER *ppVertexRemapArray,
+                                    LPD3DXBUFFER *ppPartitionResultAdjacency,
+                                    FLOAT *pfMaxStretchOut,
+                                    UINT *puNumChartsOut);
+
+// This takes the face partitioning result from Partition and packs it into an
+// atlas of the given size. pdwPartitionResultAdjacency should be derived from
+// the adjacency returned from the partition step. This value cannot be NULL
+// because Pack needs to know where charts were cut in the partition step in
+// order to find the edges of each chart.
+// The options parameter is currently reserved.
+HRESULT WINAPI D3DXUVAtlasPack(ID3DXMesh *pMesh,
+                               UINT uWidth,
+                               UINT uHeight,
+                               FLOAT fGutter,
+                               DWORD dwTextureIndex,
+                               CONST DWORD *pdwPartitionResultAdjacency,
+                               LPD3DXUVATLASCB pStatusCallback,
+                               FLOAT fCallbackFrequency,
+                               LPVOID pUserContext,
+                               DWORD dwOptions,
+                               LPD3DXBUFFER pFacePartitioning);
+
+
+//============================================================================
+//
+// IMT Calculation apis
+//
+// These functions all compute the Integrated Metric Tensor for use in the
+// UVAtlas API. They all calculate the IMT with respect to the canonical
+// triangle, where the coordinate system is set up so that the u axis goes
+// from vertex 0 to 1 and the v axis is N x u. So, for example, the second
+// vertex's canonical uv coordinates are (d,0) where d is the distance between
+// vertices 0 and 1. This way the IMT does not depend on the parameterization
+// of the mesh, and if the signal over the surface doesn't change, then
+// the IMT doesn't need to be recalculated.
+//============================================================================
+
+// This callback is used by D3DXComputeIMTFromSignal.
+//
+// uv               - The texture coordinate for the vertex.
+// uPrimitiveID     - Face ID of the triangle on which to compute the signal.
+// uSignalDimension - The number of floats to store in pfSignalOut.
+// pUserData        - The pUserData pointer passed in to ComputeIMTFromSignal.
+// pfSignalOut      - A pointer to where to store the signal data.
+typedef HRESULT (WINAPI* LPD3DXIMTSIGNALCALLBACK)
+    (CONST D3DXVECTOR2 *uv,
+     UINT uPrimitiveID,
+     UINT uSignalDimension,
+     VOID *pUserData,
+     FLOAT *pfSignalOut);
+
+// This function is used to calculate the IMT from per vertex data. It sets
+// up a linear system over the triangle, solves for the jacobian J, then
+// constructs the IMT from that (J^TJ).
+// This function allows you to calculate the IMT based off of any value in a
+// mesh (color, normal, etc) by specifying the correct stride of the array.
+// The IMT computed will cause areas of the mesh that have similar values to
+// take up less space in the texture.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// pVertexSignal    - A float array of size uSignalStride * v, where v is the
+//                    number of vertices in the mesh.
+// uSignalDimension - How many floats per vertex to use in calculating the IMT.
+// uSignalStride    - The number of bytes per vertex in the array. This must be
+//                    a multiple of sizeof(float)
+// ppIMTData        - Where to store the buffer holding the IMT data
+
+HRESULT WINAPI D3DXComputeIMTFromPerVertexSignal (
+    LPD3DXMESH pMesh,
+    CONST FLOAT *pfVertexSignal, // uSignalDimension floats per vertex
+    UINT uSignalDimension,
+    UINT uSignalStride,         // stride of signal in bytes
+    DWORD dwOptions,            // reserved for future use
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
+
+// This function is used to calculate the IMT from data that varies over the
+// surface of the mesh (generally at a higher frequency than vertex data).
+// This function requires the mesh to already be parameterized (so it already
+// has texture coordinates). It allows the user to define a signal arbitrarily
+// over the surface of the mesh.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// dwTextureIndex   - This describes which set of texture coordinates in the
+//                    mesh to use.
+// uSignalDimension - How many components there are in the signal.
+// fMaxUVDistance   - The subdivision will continue until the distance between
+//                    all vertices is at most fMaxUVDistance.
+// dwOptions        - reserved for future use
+// pSignalCallback  - The callback to use to get the signal.
+// pUserData        - A pointer that will be passed in to the callback.
+// ppIMTData        - Where to store the buffer holding the IMT data
+HRESULT WINAPI D3DXComputeIMTFromSignal(
+    LPD3DXMESH pMesh,
+    DWORD dwTextureIndex,
+    UINT uSignalDimension,
+    FLOAT fMaxUVDistance,
+    DWORD dwOptions, // reserved for future use
+    LPD3DXIMTSIGNALCALLBACK pSignalCallback,
+    VOID *pUserData,
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
+
+// This function is used to calculate the IMT from texture data. Given a texture
+// that maps over the surface of the mesh, the algorithm computes the IMT for
+// each face. This will cause large areas that are very similar to take up less
+// room when parameterized with UVAtlas. The texture is assumed to be
+// interpolated over the mesh bilinearly.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// pTexture         - The texture to load data from.
+// dwTextureIndex   - This describes which set of texture coordinates in the
+//                    mesh to use.
+// dwOptions        - Combination of one or more D3DXIMT flags.
+// ppIMTData        - Where to store the buffer holding the IMT data
+HRESULT WINAPI D3DXComputeIMTFromTexture (
+    LPD3DXMESH pMesh,
+    LPDIRECT3DTEXTURE9 pTexture,
+    DWORD dwTextureIndex,
+    DWORD dwOptions,
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
+
+// This function is very similar to ComputeIMTFromTexture, but it uses a
+// float array to pass in the data, and it can calculate higher dimensional
+// values than 4.
+//
+// pMesh            - The mesh to calculate the IMT for.
+// dwTextureIndex   - This describes which set of texture coordinates in the
+//                    mesh to use.
+// pfFloatArray     - a pointer to a float array of size
+//                    uWidth*uHeight*uComponents
+// uWidth           - The width of the texture
+// uHeight          - The height of the texture
+// uSignalDimension - The number of floats per texel in the signal
+// uComponents      - The number of floats in each texel
+// dwOptions        - Combination of one or more D3DXIMT flags
+// ppIMTData        - Where to store the buffer holding the IMT data
+HRESULT WINAPI D3DXComputeIMTFromPerTexelSignal(
+    LPD3DXMESH pMesh,
+    DWORD dwTextureIndex,
+    FLOAT *pfTexelSignal,
+    UINT uWidth,
+    UINT uHeight,
+    UINT uSignalDimension,
+    UINT uComponents,
+    DWORD dwOptions,
+    LPD3DXUVATLASCB pStatusCallback,
+    LPVOID pUserContext,
+    LPD3DXBUFFER *ppIMTData);
 
 HRESULT WINAPI
     D3DXConvertMeshSubsetToSingleStrip(
@@ -1247,23 +1608,18 @@ DEFINE_GUID(IID_ID3DXPRTBuffer,
 DEFINE_GUID(IID_ID3DXPRTCompBuffer, 
 0xa758d465, 0xfe8d, 0x45ad, 0x9c, 0xf0, 0xd0, 0x1e, 0x56, 0x26, 0x6a, 0x7);
 
-// {06F57E0A-BD95-43f1-A3DA-791CF6CA297B}
+// {838F01EC-9729-4527-AADB-DF70ADE7FEA9}
 DEFINE_GUID(IID_ID3DXTextureGutterHelper, 
-0x6f57e0a, 0xbd95, 0x43f1, 0xa3, 0xda, 0x79, 0x1c, 0xf6, 0xca, 0x29, 0x7b);
+0x838f01ec, 0x9729, 0x4527, 0xaa, 0xdb, 0xdf, 0x70, 0xad, 0xe7, 0xfe, 0xa9);
 
-// {C3F4ADBF-E6D2-4b7b-BFE8-9E7208746ADF}
+// {683A4278-CD5F-4d24-90AD-C4E1B6855D53}
 DEFINE_GUID(IID_ID3DXPRTEngine, 
-0xc3f4adbf, 0xe6d2, 0x4b7b, 0xbf, 0xe8, 0x9e, 0x72, 0x8, 0x74, 0x6a, 0xdf);
+0x683a4278, 0xcd5f, 0x4d24, 0x90, 0xad, 0xc4, 0xe1, 0xb6, 0x85, 0x5d, 0x53);
 
 // interface defenitions
 
-
 typedef interface ID3DXTextureGutterHelper ID3DXTextureGutterHelper;
-typedef interface ID3DXTextureGutterHelper *LPD3DXTEXTUREGUTTERHELPER;
-
 typedef interface ID3DXPRTBuffer ID3DXPRTBuffer;
-typedef interface ID3DXPRTBuffer *LPD3DXPRTBUFFER;
-
 
 #undef INTERFACE
 #define INTERFACE ID3DXPRTBuffer
@@ -1431,6 +1787,27 @@ DECLARE_INTERFACE_(ID3DXTextureGutterHelper, IUnknown)
     // Applies gutters to a D3DXPRTBuffer
     // Dimensions must match GutterHelper
     STDMETHOD(ApplyGuttersPRT)(THIS_ LPD3DXPRTBUFFER pBuffer);
+       
+    // Resamples a texture from a mesh onto this gutterhelpers
+    // parameterization.  It is assumed that the UV coordinates
+    // for this gutter helper are in TEXTURE 0 (usage/usage index)
+    // and the texture coordinates should all be within [0,1] for
+    // both sets.
+    //
+    // pTextureIn - texture represented using parameterization in pMeshIn
+    // pMeshIn    - Mesh with texture coordinates that represent pTextureIn
+    //              pTextureOut texture coordinates are assumed to be in
+    //              TEXTURE 0
+    // Usage      - field in DECL for pMeshIn that stores texture coordinates
+    //              for pTextureIn
+    // UsageIndex - which index for Usage above for pTextureIn
+    // pTextureOut- Resampled texture
+    // 
+    // Usage would generally be D3DDECLUSAGE_TEXCOORD  and UsageIndex other than zero
+    STDMETHOD(ResampleTex)(THIS_ LPDIRECT3DTEXTURE9 pTextureIn,
+                                 LPD3DXMESH pMeshIn,
+                                 D3DDECLUSAGE Usage, UINT UsageIndex,
+                                 LPDIRECT3DTEXTURE9 pTextureOut);    
     
     // the routines below provide access to the data structures
     // used by the Apply functions
@@ -1594,6 +1971,15 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     // Number of faces currently allocated (includes new faces)
     STDMETHOD_(UINT, GetNumFaces)(THIS) PURE;
 
+    // Sets the Minimum/Maximum intersection distances, this can be used to control
+    // maximum distance that objects can shadow/reflect light, and help with "bad"
+    // art that might have near features that you don't want to shadow.  This does not
+    // apply for GPU simulations.
+    //  fMin - minimum intersection distance, must be positive and less than fMax
+    //  fMax - maximum intersection distance, if 0.0f use the previous value, otherwise
+    //      must be strictly greater than fMin
+    STDMETHOD(SetMinMaxIntersection)(THIS_ FLOAT fMin, FLOAT fMax) PURE;
+
     // This will subdivide faces on a mesh so that adaptively simulations can
     // use a more conservative threshold (it won't miss features.)
     // MinEdgeLength - minimum edge length that will be generated, if 0.0f a
@@ -1685,6 +2071,24 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     STDMETHOD(ComputeSS)(THIS_ LPD3DXPRTBUFFER pDataIn, 
                          LPD3DXPRTBUFFER pDataOut, LPD3DXPRTBUFFER pDataTotal) PURE;
 
+    // Adaptive version of ComputeSS.
+    //
+    // pDataIn - input data (previous bounce)
+    // AdaptiveThresh - threshold for adaptive subdivision (in PRT vector error)
+    //  if value is less then 1e-6f, 1e-6f is specified
+    // MinEdgeLength - minimum edge length that will be generated
+    //  if value is too small a fairly conservative model dependent value
+    //  is used
+    // MaxSubdiv - maximum subdivision level, if 0 is specified it 
+    //  will default to 4    
+    // pDataOut - result of subsurface scattering simulation
+    // pDataTotal - [optional] results can be summed into this buffer
+    STDMETHOD(ComputeSSAdaptive)(THIS_ LPD3DXPRTBUFFER pDataIn, 
+                                 FLOAT AdaptiveThresh,
+                                 FLOAT MinEdgeLength,
+                                 UINT MaxSubdiv,
+                                 LPD3DXPRTBUFFER pDataOut, LPD3DXPRTBUFFER pDataTotal) PURE;
+
     // computes a single bounce of inter-reflected light
     // works for SH based PRT or generic lighting
     // Albedo is not multiplied by result
@@ -1765,6 +2169,38 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
                                     UINT NumVolSamples,
                                     CONST D3DXVECTOR3 *pSampleLocs,
                                     LPD3DXPRTBUFFER pDataOut) PURE;
+
+    // Computes direct lighting (SH) for a point not on the mesh
+    // with a given normal - cannot use texture buffers.
+    //
+    // SHOrder      - order of SH to use
+    // NumSamples   - number of sample locations
+    // pSampleLocs  - position for each sample
+    // pSampleNorms - normal for each sample
+    // pDataOut     - PRT Buffer that will store output results
+    STDMETHOD(ComputeSurfSamplesDirectSH)(THIS_ UINT SHOrder,
+                                          UINT NumSamples,
+                                          CONST D3DXVECTOR3 *pSampleLocs,
+                                          CONST D3DXVECTOR3 *pSampleNorms,
+                                          LPD3DXPRTBUFFER pDataOut) PURE;
+
+
+    // given the solution for PRT or light maps, computes transfer vector at arbitrary 
+    // position/normal pairs in space
+    //
+    // pSurfDataIn  - input data
+    // NumSamples   - number of sample locations
+    // pSampleLocs  - position for each sample
+    // pSampleNorms - normal for each sample
+    // pDataOut     - PRT Buffer that will store output results
+    // pDataTotal   - optional buffer to sum results into - can be NULL
+    STDMETHOD(ComputeSurfSamplesBounce)(THIS_ LPD3DXPRTBUFFER pSurfDataIn,
+                                        UINT NumSamples,
+                                        CONST D3DXVECTOR3 *pSampleLocs,
+                                        CONST D3DXVECTOR3 *pSampleNorms,
+                                        LPD3DXPRTBUFFER pDataOut,
+                                        LPD3DXPRTBUFFER pDataTotal) PURE;
+
     // Frees temporary data structures that can be created for subsurface scattering
     // this data is freed when the PRTComputeEngine is freed and is lazily created
     STDMETHOD(FreeSSData)(THIS) PURE;
@@ -1773,24 +2209,25 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     // this data is freed when the PRTComputeEngine is freed and is lazily created
     STDMETHOD(FreeBounceData)(THIS) PURE;
 
-    // This computes the convolution coefficients relative to the per sample normals
-    // that minimize error in a least squares sense with respect to the input PRT
-    // data set.  These coefficients can be used with skinned/transformed normals to
-    // model global effects with dynamic objects.  Shading normals can optionaly be
-    // solved for - these normals (along with the convolution coefficients) can more
-    // accurately represent the PRT signal.
+    // This computes the Local Deformable PRT (LDPRT) coefficients relative to the 
+    // per sample normals that minimize error in a least squares sense with respect 
+    // to the input PRT data set.  These coefficients can be used with skinned/transformed 
+    // normals to model global effects with dynamic objects.  Shading normals can 
+    // optionally be solved for - these normals (along with the LDPRT coefficients) can
+    // more accurately represent the PRT signal.  The coefficients are for zonal
+    // harmonics oriented in the normal/shading normal direction.
     //
     // pDataIn  - SH PRT dataset that is input
     // SHOrder  - Order of SH to compute conv coefficients for 
     // pNormOut - Optional array of vectors (passed in) that will be filled with
-    //             "shading normals", convolution coefficients are optimized for
+    //             "shading normals", LDPRT coefficients are optimized for
     //             these normals.  This array must be the same size as the number of
     //             samples in pDataIn
-    // pDataOut - Output buffer (SHOrder convolution coefficients per channel per sample)
-    STDMETHOD(ComputeConvCoeffs)(THIS_ LPD3DXPRTBUFFER pDataIn,
-                                 UINT SHOrder,
-                                 D3DXVECTOR3 *pNormOut,
-                                 LPD3DXPRTBUFFER pDataOut) PURE;
+    // pDataOut - Output buffer (SHOrder zonal harmonic coefficients per channel per sample)
+    STDMETHOD(ComputeLDPRTCoeffs)(THIS_ LPD3DXPRTBUFFER pDataIn,
+                                  UINT SHOrder,
+                                  D3DXVECTOR3 *pNormOut,
+                                  LPD3DXPRTBUFFER pDataOut) PURE;
 
     // scales all the samples associated with a given sub mesh
     // can be useful when using subsurface scattering
@@ -1817,6 +2254,31 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     //  will be invoked
     // lpUserContext - will be passed back to the users call back
     STDMETHOD(SetCallBack)(THIS_ LPD3DXSHPRTSIMCB pCB, FLOAT Frequency,  LPVOID lpUserContext) PURE;
+    
+    // Returns TRUE if the ray intersects the mesh, FALSE if it does not.  This function
+    // takes into account settings from SetMinMaxIntersection.  If the closest intersection
+    // is not needed this function is more efficient compared to the ClosestRayIntersection
+    // method.
+    // pRayPos - origin of ray
+    // pRayDir - normalized ray direction (normalization required for SetMinMax to be meaningful)
+    
+    STDMETHOD_(BOOL, ShadowRayIntersects)(THIS_ CONST D3DXVECTOR3 *pRayPos, CONST D3DXVECTOR3 *pRayDir) PURE;
+    
+    // Returns TRUE if the ray intersects the mesh, FALSE if it does not.  If there is an
+    // intersection the closest face that was intersected and its first two barycentric coordinates
+    // are returned.  This function takes into account settings from SetMinMaxIntersection.
+    // This is a slower function compared to ShadowRayIntersects and should only be used where
+    // needed.  The third vertices barycentric coordinates will be 1 - pU - pV.
+    // pRayPos     - origin of ray
+    // pRayDir     - normalized ray direction (normalization required for SetMinMax to be meaningful)
+    // pFaceIndex  - Closest face that intersects.  This index is based on stacking the pBlockerMesh
+    //  faces before the faces from pMesh
+    // pU          - Barycentric coordinate for vertex 0
+    // pV          - Barycentric coordinate for vertex 1
+    // pDist       - Distance along ray where the intersection occured
+    
+    STDMETHOD_(BOOL, ClosestRayIntersects)(THIS_ CONST D3DXVECTOR3 *pRayPos, CONST D3DXVECTOR3 *pRayDir,
+                                           DWORD *pFaceIndex, FLOAT *pU, FLOAT *pV, FLOAT *pDist) PURE;
 };
 
 
@@ -2019,7 +2481,11 @@ HRESULT WINAPI
 //      Number of clusters to compute
 //    NumPCA
 //      Number of basis vectors to compute
-//    ppBufferIn
+//    pCB
+//      Optional Callback function
+//    lpUserContext
+//      Optional user context
+//    pBufferIn
 //      Buffer that will be compressed
 //    ppBufferOut
 //      Compressed buffer that will be created
@@ -2032,6 +2498,8 @@ HRESULT WINAPI
         D3DXSHCOMPRESSQUALITYTYPE Quality,
         UINT NumClusters, 
         UINT NumPCA,
+        LPD3DXSHPRTSIMCB pCB,
+        LPVOID lpUserContext,        
         LPD3DXPRTBUFFER  pBufferIn,
         LPD3DXPRTCOMPBUFFER *ppBufferOut
     );
@@ -2079,6 +2547,8 @@ HRESULT WINAPI
 //    pMesh
 //      Mesh that represents the scene - must have an AttributeTable
 //      where vertices are in a unique attribute.
+//    pAdjacency
+//      Optional adjacency information
 //    ExtractUVs
 //      Set this to true if textures are going to be used for albedos
 //      or to store PRT vectors
@@ -2092,7 +2562,8 @@ HRESULT WINAPI
 
 HRESULT WINAPI 
     D3DXCreatePRTEngine( 
-        LPD3DXMESH pMesh, 
+        LPD3DXMESH pMesh,
+        DWORD *pAdjacency,
         BOOL ExtractUVs,
         LPD3DXMESH pBlockerMesh, 
         LPD3DXPRTENGINE* ppEngine);

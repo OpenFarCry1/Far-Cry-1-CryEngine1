@@ -20,6 +20,15 @@
 #pragma once
 #endif
 
+// TODO:	fatal  error C1189: #error:  <hash_map> is deprecated and will be REMOVED. Please use <unordered_map>. 
+//			You can define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS to suppress this error.
+//			Replace with std::unordered_map?
+//
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
+
+// Disable CRT warnings (disable SDL check?)
+#define _CRT_SECURE_NO_WARNINGS
+
 //////////////////////////////////////////////////////////////////////////
 // THIS MUST BE AT THE VERY BEGINING OF STDAFX.H FILE.
 // Disable STL threading support, (makes STL faster)

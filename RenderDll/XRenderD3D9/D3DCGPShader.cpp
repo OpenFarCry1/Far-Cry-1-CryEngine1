@@ -25,9 +25,9 @@ static char THIS_FILE[] = __FILE__;
 //=======================================================================
 
 // init memory pool usage
-#ifndef PS2
- _ACCESS_POOL;
-#endif
+//#ifndef PS2
+// _ACCESS_POOL;
+//#endif
 
 vec4_t CCGPShader_D3D::m_CurParams[32];
 
@@ -183,7 +183,7 @@ bool CCGPShader_D3D::mfGetFXParamNameByID(int nParam, char *ParamName)
     if (!strcmp(m_EntryFunc.c_str(), funcName))
     {
       const char *pFunc = m_Functions[i].m_Struct.c_str();
-      char *s = strchr(pFunc, '(');
+      char *s = strchr((char*)pFunc, '(');
       s = strchr(s, ',');
       s++;
       int n = 0;

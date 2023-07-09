@@ -744,7 +744,8 @@ LPDIRECTSOUNDBUFFER CStreamingSound::GetFreeBuffer()
     if( m_apDSBuffer == NULL )
         return FALSE; 
 
-    for( DWORD i=0; i<m_dwNumBuffers; i++ )
+    DWORD i = 0;
+    for( ; i<m_dwNumBuffers; i++ )
     {
         if( m_apDSBuffer[i] )
         {  

@@ -5,6 +5,10 @@
 
 #pragma once
 #define NOT_USE_CRY_MEMORY_MANAGER
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
+
+#define NOSHLWAPI
+
 #include <platform.h>
 // Windows Header Files:
 #ifdef WIN64

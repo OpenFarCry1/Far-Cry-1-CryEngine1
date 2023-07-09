@@ -1034,8 +1034,8 @@ void CShader::mfCheckShaderResTexturesHW(TArray<SShaderPassHW> &Dst, SShader *ef
         nameNorm[0] = 0;
         if (Res->m_Textures[EFTT_BUMP] && !Res->m_Textures[EFTT_BUMP]->m_Name.empty())
         {
-          char *str;
-          if (str=strstr(Res->m_Textures[EFTT_BUMP]->m_Name.c_str(), "_ddn"))
+          const char* str = strstr(Res->m_Textures[EFTT_BUMP]->m_Name.c_str(), "_ddn");
+          if (str)
           {
             int nSize = str - Res->m_Textures[EFTT_BUMP]->m_Name.c_str();
             memcpy(nameBump, Res->m_Textures[EFTT_BUMP]->m_Name.c_str(), nSize);
@@ -1052,8 +1052,8 @@ void CShader::mfCheckShaderResTexturesHW(TArray<SShaderPassHW> &Dst, SShader *ef
         }
         if (Res->m_Textures[EFTT_NORMALMAP] && !Res->m_Textures[EFTT_NORMALMAP]->m_Name.empty())
         {
-          char *str;
-          if (str=strstr(Res->m_Textures[EFTT_NORMALMAP]->m_Name.c_str(), "_ddn"))
+          const char *str = strstr(Res->m_Textures[EFTT_NORMALMAP]->m_Name.c_str(), "_ddn");
+          if (str)
           {
             int nSize = str - Res->m_Textures[EFTT_NORMALMAP]->m_Name.c_str();
             memcpy(nameNorm, Res->m_Textures[EFTT_NORMALMAP]->m_Name.c_str(), nSize);

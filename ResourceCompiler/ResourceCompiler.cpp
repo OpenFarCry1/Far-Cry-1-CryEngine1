@@ -17,6 +17,8 @@
 #include "CgfUtils.h"
 #include <StringUtils.h>
 
+#include <stdio.h>
+
 //! Section in rc.ini file for common settings.
 #define COMMON_SECTION "Common"
 
@@ -720,7 +722,7 @@ void RegisterConvertors( IResourceCompiler *rc )
 void TestMatEntityNameTokenizer ()
 {
 	char szMatName[1024];
-	while (gets (szMatName))
+	while (gets_s (szMatName))
 	{
 		CMatEntityNameTokenizer mt;
 		mt.tokenize(szMatName);

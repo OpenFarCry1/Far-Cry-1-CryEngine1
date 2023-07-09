@@ -76,17 +76,35 @@
 //
 //----------------------------------------------------------------------------
 
-#define D3DXSHADER_DEBUG                    (1 << 0)
-#define D3DXSHADER_SKIPVALIDATION           (1 << 1)
-#define D3DXSHADER_SKIPOPTIMIZATION         (1 << 2)
-#define D3DXSHADER_PACKMATRIX_ROWMAJOR      (1 << 3)
-#define D3DXSHADER_PACKMATRIX_COLUMNMAJOR   (1 << 4)
-#define D3DXSHADER_PARTIALPRECISION         (1 << 5)
-#define D3DXSHADER_FORCE_VS_SOFTWARE_NOOPT  (1 << 6)
-#define D3DXSHADER_FORCE_PS_SOFTWARE_NOOPT  (1 << 7)
-#define D3DXSHADER_NO_PRESHADER             (1 << 8)
-#define D3DXSHADER_AVOID_FLOW_CONTROL       (1 << 9)
-#define D3DXSHADER_PREFER_FLOW_CONTROL      (1 << 10)
+#define D3DXSHADER_DEBUG                          (1 << 0)
+#define D3DXSHADER_SKIPVALIDATION                 (1 << 1)
+#define D3DXSHADER_SKIPOPTIMIZATION               (1 << 2)
+#define D3DXSHADER_PACKMATRIX_ROWMAJOR            (1 << 3)
+#define D3DXSHADER_PACKMATRIX_COLUMNMAJOR         (1 << 4)
+#define D3DXSHADER_PARTIALPRECISION               (1 << 5)
+#define D3DXSHADER_FORCE_VS_SOFTWARE_NOOPT        (1 << 6)
+#define D3DXSHADER_FORCE_PS_SOFTWARE_NOOPT        (1 << 7)
+#define D3DXSHADER_NO_PRESHADER                   (1 << 8)
+#define D3DXSHADER_AVOID_FLOW_CONTROL             (1 << 9)
+#define D3DXSHADER_PREFER_FLOW_CONTROL            (1 << 10)
+#define D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY (1 << 12)
+#define D3DXSHADER_IEEE_STRICTNESS                (1 << 13)
+#define D3DXSHADER_USE_LEGACY_D3DX9_31_DLL        (1 << 16)
+
+
+// optimization level flags
+#define D3DXSHADER_OPTIMIZATION_LEVEL0            (1 << 14)
+#define D3DXSHADER_OPTIMIZATION_LEVEL1            0
+#define D3DXSHADER_OPTIMIZATION_LEVEL2            ((1 << 14) | (1 << 15))
+#define D3DXSHADER_OPTIMIZATION_LEVEL3            (1 << 15)
+
+
+
+//----------------------------------------------------------------------------
+// D3DXCONSTTABLE flags:
+// -------------------
+
+#define D3DXCONSTTABLE_LARGEADDRESSAWARE          (1 << 17)
 
 
 
@@ -97,7 +115,11 @@
 // Strings can be used as handles.  However, handles are not always strings.
 //----------------------------------------------------------------------------
 
+#ifndef D3DXFX_LARGEADDRESS_HANDLE
 typedef LPCSTR D3DXHANDLE;
+#else
+typedef UINT_PTR D3DXHANDLE;
+#endif
 typedef D3DXHANDLE *LPD3DXHANDLE;
 
 
@@ -128,18 +150,6 @@ typedef struct _D3DXSEMANTIC
 
 } D3DXSEMANTIC, *LPD3DXSEMANTIC;
 
-
-
-//----------------------------------------------------------------------------
-// D3DXFRAGMENT_DESC:
-//----------------------------------------------------------------------------
-
-typedef struct _D3DXFRAGMENT_DESC
-{
-    LPCSTR Name;
-    DWORD Target;
-
-} D3DXFRAGMENT_DESC, *LPD3DXFRAGMENT_DESC;
 
 
 //----------------------------------------------------------------------------
@@ -203,6 +213,7 @@ typedef enum _D3DXPARAMETER_TYPE
     D3DXPT_VERTEXSHADER,
     D3DXPT_PIXELFRAGMENT,
     D3DXPT_VERTEXFRAGMENT,
+    D3DXPT_UNSUPPORTED,
 
     // force 32-bit size enum
     D3DXPT_FORCE_DWORD = 0x7fffffff
@@ -360,53 +371,6 @@ DECLARE_INTERFACE_(ID3DXTextureShader, IUnknown)
 };
 
 
-
-//----------------------------------------------------------------------------
-// ID3DXFragmentLinker
-//----------------------------------------------------------------------------
-
-typedef interface ID3DXFragmentLinker ID3DXFragmentLinker;
-typedef interface ID3DXFragmentLinker *LPD3DXFRAGMENTLINKER;
-
-// {1A2C0CC2-E5B6-4ebc-9E8D-390E057811B6}
-DEFINE_GUID(IID_ID3DXFragmentLinker, 
-0x1a2c0cc2, 0xe5b6, 0x4ebc, 0x9e, 0x8d, 0x39, 0xe, 0x5, 0x78, 0x11, 0xb6);
-
-#undef INTERFACE
-#define INTERFACE ID3DXFragmentLinker
-
-DECLARE_INTERFACE_(ID3DXFragmentLinker, IUnknown)
-{
-    // IUnknown
-    STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv) PURE;
-    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG, Release)(THIS) PURE;
-
-    // ID3DXFragmentLinker
-
-    // fragment access and information retrieval functions
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* ppDevice) PURE;
-    STDMETHOD_(UINT, GetNumberOfFragments)(THIS) PURE;
-
-    STDMETHOD_(D3DXHANDLE, GetFragmentHandleByIndex)(THIS_ UINT Index) PURE;
-    STDMETHOD_(D3DXHANDLE, GetFragmentHandleByName)(THIS_ LPCSTR Name) PURE;
-    STDMETHOD(GetFragmentDesc)(THIS_ D3DXHANDLE Name, LPD3DXFRAGMENT_DESC FragDesc) PURE;
-
-    // add the fragments in the buffer to the linker
-    STDMETHOD(AddFragments)(THIS_ CONST DWORD *Fragments) PURE;
-
-    // Create a buffer containing the fragments.  Suitable for saving to disk
-    STDMETHOD(GetAllFragments)(THIS_ LPD3DXBUFFER *ppBuffer) PURE;
-    STDMETHOD(GetFragment)(THIS_ D3DXHANDLE Name, LPD3DXBUFFER *ppBuffer) PURE;
-
-    STDMETHOD(LinkShader)(THIS_ LPCSTR pProfile, DWORD Flags, CONST D3DXHANDLE *rgFragmentHandles, UINT cFragments, LPD3DXBUFFER *ppBuffer, LPD3DXBUFFER *ppErrorMsgs) PURE;
-    STDMETHOD(LinkVertexShader)(THIS_ LPCSTR pProfile, DWORD Flags, CONST D3DXHANDLE *rgFragmentHandles, UINT cFragments, LPDIRECT3DVERTEXSHADER9 *pVShader, LPD3DXBUFFER *ppErrorMsgs) PURE;
-    STDMETHOD(LinkPixelShader)(THIS_ LPCSTR pProfile, DWORD Flags, CONST D3DXHANDLE *rgFragmentHandles, UINT cFragments, LPDIRECT3DPIXELSHADER9 *pPShader, LPD3DXBUFFER *ppErrorMsgs) PURE;
-
-    STDMETHOD(ClearCache)(THIS) PURE;
-};
-
-
 //----------------------------------------------------------------------------
 // D3DXINCLUDE_TYPE:
 //----------------------------------------------------------------------------
@@ -432,7 +396,7 @@ typedef enum _D3DXINCLUDE_TYPE
 // Open()
 //    Opens an include file.  If successful, it should fill in ppData and
 //    pBytes.  The data pointer returned must remain valid until Close is
-//    subsequently called.
+//    subsequently called.  The name of the file is encoded in UTF-8 format.
 // Close()
 //    Closes an include file.  If Open was successful, Close is guaranteed
 //    to be called before the API using this interface returns.
@@ -846,6 +810,8 @@ HRESULT WINAPI
 // Parameters:
 //  pFunction
 //      Pointer to the function DWORD stream
+//  Flags
+//      See D3DXCONSTTABLE_xxx
 //  ppConstantTable
 //      Returns a ID3DXConstantTable object which can be used to set
 //      shader constants to the device.  Alternatively, an application can
@@ -856,6 +822,12 @@ HRESULT WINAPI
 HRESULT WINAPI
     D3DXGetShaderConstantTable(
         CONST DWORD*                    pFunction,
+        LPD3DXCONSTANTTABLE*            ppConstantTable);
+
+HRESULT WINAPI
+    D3DXGetShaderConstantTableEx(
+        CONST DWORD*                    pFunction,
+        DWORD                           Flags,
         LPD3DXCONSTANTTABLE*            ppConstantTable);
 
 
@@ -879,12 +851,13 @@ HRESULT WINAPI
         LPD3DXTEXTURESHADER*            ppTextureShader);
 
 
-
 //----------------------------------------------------------------------------
-// D3DXGatherFragments:
-// -------------------
-// Assembles shader fragments into a buffer to be passed to a fragment linker.
-//   will generate shader fragments for all fragments in the file
+// D3DXPreprocessShader:
+// ---------------------
+// Runs the preprocessor on the specified shader or effect, but does
+// not actually compile it.  This is useful for evaluating the #includes
+// and #defines in a shader and then emitting a reformatted token stream
+// for debugging purposes or for generating a self-contained shader.
 //
 // Parameters:
 //  pSrcFile
@@ -903,104 +876,69 @@ HRESULT WINAPI
 //      Optional interface pointer to use for handling #include directives.
 //      If this parameter is NULL, #includes will be honored when assembling
 //      from file, and will error when assembling from resource or memory.
-//  Flags
-//      See D3DXSHADER_xxx flags
-//  ppShader
-//      Returns a buffer containing the created shader fragments.  This buffer contains
-//      the assembled shader code, as well as any embedded debug info.
+//  ppShaderText
+//      Returns a buffer containing a single large string that represents
+//      the resulting formatted token stream
 //  ppErrorMsgs
 //      Returns a buffer containing a listing of errors and warnings that were
 //      encountered during assembly.  If you are running in a debugger,
 //      these are the same messages you will see in your debug output.
 //----------------------------------------------------------------------------
 
-
-HRESULT WINAPI
-D3DXGatherFragmentsFromFileA(
-        LPCSTR                          pSrcFile,
-        CONST D3DXMACRO*                pDefines,
-        LPD3DXINCLUDE                   pInclude,
-        DWORD                           Flags,
-        LPD3DXBUFFER*                   ppShader,
-        LPD3DXBUFFER*                   ppErrorMsgs);
-
-HRESULT WINAPI
-D3DXGatherFragmentsFromFileW(
-        LPCWSTR                         pSrcFile,
-        CONST D3DXMACRO*                pDefines,
-        LPD3DXINCLUDE                   pInclude,
-        DWORD                           Flags,
-        LPD3DXBUFFER*                   ppShader,
-        LPD3DXBUFFER*                   ppErrorMsgs);
+HRESULT WINAPI 
+    D3DXPreprocessShaderFromFileA(
+        LPCSTR                       pSrcFile,
+        CONST D3DXMACRO*             pDefines,
+        LPD3DXINCLUDE                pInclude,
+        LPD3DXBUFFER*                ppShaderText,
+        LPD3DXBUFFER*                ppErrorMsgs);
+                                             
+HRESULT WINAPI 
+    D3DXPreprocessShaderFromFileW(
+        LPCWSTR                      pSrcFile,
+        CONST D3DXMACRO*             pDefines,
+        LPD3DXINCLUDE                pInclude,
+        LPD3DXBUFFER*                ppShaderText,
+        LPD3DXBUFFER*                ppErrorMsgs);
 
 #ifdef UNICODE
-#define D3DXGatherFragmentsFromFile D3DXGatherFragmentsFromFileW
+#define D3DXPreprocessShaderFromFile D3DXPreprocessShaderFromFileW
 #else
-#define D3DXGatherFragmentsFromFile D3DXGatherFragmentsFromFileA
+#define D3DXPreprocessShaderFromFile D3DXPreprocessShaderFromFileA
 #endif
+                                             
+HRESULT WINAPI 
+    D3DXPreprocessShaderFromResourceA(
+        HMODULE                      hSrcModule,
+        LPCSTR                       pSrcResource,
+        CONST D3DXMACRO*             pDefines,
+        LPD3DXINCLUDE                pInclude,
+        LPD3DXBUFFER*                ppShaderText,
+        LPD3DXBUFFER*                ppErrorMsgs);
 
-
-HRESULT WINAPI
-    D3DXGatherFragmentsFromResourceA(
-        HMODULE                         hSrcModule,
-        LPCSTR                          pSrcResource,
-        CONST D3DXMACRO*                pDefines,
-        LPD3DXINCLUDE                   pInclude,
-        DWORD                           Flags,
-        LPD3DXBUFFER*                   ppShader,
-        LPD3DXBUFFER*                   ppErrorMsgs);
-
-HRESULT WINAPI
-    D3DXGatherFragmentsFromResourceW(
-        HMODULE                         hSrcModule,
-        LPCWSTR                         pSrcResource,
-        CONST D3DXMACRO*                pDefines,
-        LPD3DXINCLUDE                   pInclude,
-        DWORD                           Flags,
-        LPD3DXBUFFER*                   ppShader,
-        LPD3DXBUFFER*                   ppErrorMsgs);
+HRESULT WINAPI 
+    D3DXPreprocessShaderFromResourceW(
+        HMODULE                      hSrcModule,
+        LPCWSTR                      pSrcResource,
+        CONST D3DXMACRO*             pDefines,
+        LPD3DXINCLUDE                pInclude,
+        LPD3DXBUFFER*                ppShaderText,
+        LPD3DXBUFFER*                ppErrorMsgs);
 
 #ifdef UNICODE
-#define D3DXGatherFragmentsFromResource D3DXGatherFragmentsFromResourceW
+#define D3DXPreprocessShaderFromResource D3DXPreprocessShaderFromResourceW
 #else
-#define D3DXGatherFragmentsFromResource D3DXGatherFragmentsFromResourceA
+#define D3DXPreprocessShaderFromResource D3DXPreprocessShaderFromResourceA
 #endif
 
-
-HRESULT WINAPI
-    D3DXGatherFragments(
-        LPCSTR                          pSrcData,
-        UINT                            SrcDataLen,
-        CONST D3DXMACRO*                pDefines,
-        LPD3DXINCLUDE                   pInclude,
-        DWORD                           Flags,
-        LPD3DXBUFFER*                   ppShader,
-        LPD3DXBUFFER*                   ppErrorMsgs);
-
-
-
-//----------------------------------------------------------------------------
-// D3DXCreateFragmentLinker:
-// -------------------------
-// Creates a fragment linker with a given cache size.  The interface returned 
-// can be used to link together shader fragments.  (both HLSL & ASM fragements)
-//
-// Parameters:
-//  pDevice
-//      Pointer to the device on which to create the shaders
-//  ShaderCacheSize
-//      Size of the shader cache
-//  ppFragmentLinker
-//      pointer to a memory location to put the created interface pointer
-//
-//----------------------------------------------------------------------------
-
-HRESULT WINAPI
-    D3DXCreateFragmentLinker(
-        LPDIRECT3DDEVICE9               pDevice,
-        UINT                            ShaderCacheSize,
-        LPD3DXFRAGMENTLINKER*           ppFragmentLinker);
-
+HRESULT WINAPI 
+    D3DXPreprocessShader(
+        LPCSTR                       pSrcData,
+        UINT                         SrcDataSize,
+        CONST D3DXMACRO*             pDefines,
+        LPD3DXINCLUDE                pInclude,
+        LPD3DXBUFFER*                ppShaderText,
+        LPD3DXBUFFER*                ppErrorMsgs);
 
 
 #ifdef __cplusplus
