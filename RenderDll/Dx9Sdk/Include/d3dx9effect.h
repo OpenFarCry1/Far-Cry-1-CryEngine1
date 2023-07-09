@@ -25,12 +25,20 @@
 // D3DXFX_DONOTSAVESAMPLERSTATE
 //   This flag is used as a parameter to ID3DXEffect::Begin(). When this flag
 //   is specified, sampler device state is not saved or restored in Begin/End.
+// D3DXFX_NOT_CLONEABLE
+//   This flag is used as a parameter to the D3DXCreateEffect family of APIs.
+//   When this flag is specified, the effect will be non-cloneable and will not
+//   contain any shader binary data.
+//   Furthermore, GetPassDesc will not return shader function pointers. 
+//   Setting this flag reduces effect memory usage by about 50%.
 //----------------------------------------------------------------------------
 
 #define D3DXFX_DONOTSAVESTATE         (1 << 0)
 #define D3DXFX_DONOTSAVESHADERSTATE   (1 << 1)
 #define D3DXFX_DONOTSAVESAMPLERSTATE  (1 << 2)
 
+#define D3DXFX_NOT_CLONEABLE          (1 << 11)
+#define D3DXFX_LARGEADDRESSAWARE      (1 << 17)
 
 //----------------------------------------------------------------------------
 // D3DX_PARAMETER_SHARED
@@ -48,7 +56,6 @@
 #define D3DX_PARAMETER_SHARED       (1 << 0)
 #define D3DX_PARAMETER_LITERAL      (1 << 1)
 #define D3DX_PARAMETER_ANNOTATION   (1 << 2)
-
 
 //----------------------------------------------------------------------------
 // D3DXEFFECT_DESC:
@@ -159,9 +166,9 @@ DECLARE_INTERFACE_(ID3DXEffectPool, IUnknown)
 typedef interface ID3DXBaseEffect ID3DXBaseEffect;
 typedef interface ID3DXBaseEffect *LPD3DXBASEEFFECT;
 
-// {3B7A6FFB-3A69-46d7-BC01-A6B2AD4C2BB0}
+// {017C18AC-103F-4417-8C51-6BF6EF1E56BE}
 DEFINE_GUID(IID_ID3DXBaseEffect, 
-0x3b7a6ffb, 0x3a69, 0x46d7, 0xbc, 0x1, 0xa6, 0xb2, 0xad, 0x4c, 0x2b, 0xb0);
+0x17c18ac, 0x103f, 0x4417, 0x8c, 0x51, 0x6b, 0xf6, 0xef, 0x1e, 0x56, 0xbe);
 
 
 #undef INTERFACE
@@ -230,9 +237,7 @@ DECLARE_INTERFACE_(ID3DXBaseEffect, IUnknown)
     STDMETHOD(GetString)(THIS_ D3DXHANDLE hParameter, LPCSTR* ppString) PURE;
     STDMETHOD(SetTexture)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DBASETEXTURE9 pTexture) PURE;
     STDMETHOD(GetTexture)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DBASETEXTURE9 *ppTexture) PURE;
-    STDMETHOD(SetPixelShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DPIXELSHADER9 pPShader) PURE;
     STDMETHOD(GetPixelShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DPIXELSHADER9 *ppPShader) PURE;
-    STDMETHOD(SetVertexShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DVERTEXSHADER9 pVShader) PURE;
     STDMETHOD(GetVertexShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DVERTEXSHADER9 *ppVShader) PURE;
 
     //Set Range of an Array to pass to device
@@ -303,9 +308,9 @@ DECLARE_INTERFACE_(ID3DXEffectStateManager, IUnknown)
 typedef interface ID3DXEffect ID3DXEffect;
 typedef interface ID3DXEffect *LPD3DXEFFECT;
 
-// {0F0DCC9F-6152-4117-A933-FFAC29C43AA4}
+// {F6CEB4B3-4E4C-40dd-B883-8D8DE5EA0CD5}
 DEFINE_GUID(IID_ID3DXEffect, 
-0xf0dcc9f, 0x6152, 0x4117, 0xa9, 0x33, 0xff, 0xac, 0x29, 0xc4, 0x3a, 0xa4);
+0xf6ceb4b3, 0x4e4c, 0x40dd, 0xb8, 0x83, 0x8d, 0x8d, 0xe5, 0xea, 0xc, 0xd5);
 
 #undef INTERFACE
 #define INTERFACE ID3DXEffect
@@ -373,9 +378,7 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(GetString)(THIS_ D3DXHANDLE hParameter, LPCSTR* ppString) PURE;
     STDMETHOD(SetTexture)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DBASETEXTURE9 pTexture) PURE;
     STDMETHOD(GetTexture)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DBASETEXTURE9 *ppTexture) PURE;
-    STDMETHOD(SetPixelShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DPIXELSHADER9 pPShader) PURE;
     STDMETHOD(GetPixelShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DPIXELSHADER9 *ppPShader) PURE;
-    STDMETHOD(SetVertexShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DVERTEXSHADER9 pVShader) PURE;
     STDMETHOD(GetVertexShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DVERTEXSHADER9 *ppVShader) PURE;
 
 	//Set Range of an Array to pass to device
@@ -420,9 +423,13 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(BeginParameterBlock)(THIS) PURE;
     STDMETHOD_(D3DXHANDLE, EndParameterBlock)(THIS) PURE;
     STDMETHOD(ApplyParameterBlock)(THIS_ D3DXHANDLE hParameterBlock) PURE;
+    STDMETHOD(DeleteParameterBlock)(THIS_ D3DXHANDLE hParameterBlock) PURE;
 
     // Cloning
     STDMETHOD(CloneEffect)(THIS_ LPDIRECT3DDEVICE9 pDevice, LPD3DXEFFECT* ppEffect) PURE;
+    
+    // Fast path for setting variables directly in ID3DXEffect
+    STDMETHOD(SetRawValue)(THIS_ D3DXHANDLE hParameter, LPCVOID pData, UINT ByteOffset, UINT Bytes) PURE;
 };
 
 
@@ -433,9 +440,9 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
 typedef interface ID3DXEffectCompiler ID3DXEffectCompiler;
 typedef interface ID3DXEffectCompiler *LPD3DXEFFECTCOMPILER;
 
-// {15A709EB-5A8E-40a0-86A9-0C024124339B}
+// {51B8A949-1A31-47e6-BEA0-4B30DB53F1E0}
 DEFINE_GUID(IID_ID3DXEffectCompiler, 
-0x15a709eb, 0x5a8e, 0x40a0, 0x86, 0xa9, 0xc, 0x2, 0x41, 0x24, 0x33, 0x9b);
+0x51b8a949, 0x1a31, 0x47e6, 0xbe, 0xa0, 0x4b, 0x30, 0xdb, 0x53, 0xf1, 0xe0);
 
 
 #undef INTERFACE
@@ -504,9 +511,7 @@ DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
     STDMETHOD(GetString)(THIS_ D3DXHANDLE hParameter, LPCSTR* ppString) PURE;
     STDMETHOD(SetTexture)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DBASETEXTURE9 pTexture) PURE;
     STDMETHOD(GetTexture)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DBASETEXTURE9 *ppTexture) PURE;
-    STDMETHOD(SetPixelShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DPIXELSHADER9 pPShader) PURE;
     STDMETHOD(GetPixelShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DPIXELSHADER9 *ppPShader) PURE;
-    STDMETHOD(SetVertexShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DVERTEXSHADER9 pVShader) PURE;
     STDMETHOD(GetVertexShader)(THIS_ D3DXHANDLE hParameter, LPDIRECT3DVERTEXSHADER9 *ppVShader) PURE;
     
 	//Set Range of an Array to pass to device
@@ -573,6 +578,14 @@ HRESULT WINAPI
 //      Size of the effect description in bytes
 //  pDefines
 //      Optional NULL-terminated array of preprocessor macro definitions.
+//  Flags
+//      See D3DXSHADER_xxx flags.
+//  pSkipConstants
+//      A list of semi-colon delimited variable names.  The effect will
+//      not set these variables to the device when they are referenced
+//      by a shader.  NOTE: the variables specified here must be
+//      register bound in the file and must not be used in expressions
+//      in passes or samplers or the file will not load.
 //  pInclude
 //      Optional interface pointer to use for handling #include directives.
 //      If this parameter is NULL, #includes will be honored when compiling
@@ -660,7 +673,86 @@ HRESULT WINAPI
         LPD3DXEFFECT*                   ppEffect,
         LPD3DXBUFFER*                   ppCompilationErrors);
 
+//
+// Ex functions that accept pSkipConstants in addition to other parameters
+//
 
+HRESULT WINAPI
+    D3DXCreateEffectFromFileExA(
+        LPDIRECT3DDEVICE9               pDevice,
+        LPCSTR                          pSrcFile,
+        CONST D3DXMACRO*                pDefines,
+        LPD3DXINCLUDE                   pInclude,
+        LPCSTR                          pSkipConstants, 
+        DWORD                           Flags,
+        LPD3DXEFFECTPOOL                pPool,
+        LPD3DXEFFECT*                   ppEffect,
+        LPD3DXBUFFER*                   ppCompilationErrors);
+
+HRESULT WINAPI
+    D3DXCreateEffectFromFileExW(
+        LPDIRECT3DDEVICE9               pDevice,
+        LPCWSTR                         pSrcFile,
+        CONST D3DXMACRO*                pDefines,
+        LPD3DXINCLUDE                   pInclude,
+        LPCSTR                          pSkipConstants, 
+        DWORD                           Flags,
+        LPD3DXEFFECTPOOL                pPool,
+        LPD3DXEFFECT*                   ppEffect,
+        LPD3DXBUFFER*                   ppCompilationErrors);
+
+#ifdef UNICODE
+#define D3DXCreateEffectFromFileEx D3DXCreateEffectFromFileExW
+#else
+#define D3DXCreateEffectFromFileEx D3DXCreateEffectFromFileExA
+#endif
+
+
+HRESULT WINAPI
+    D3DXCreateEffectFromResourceExA(
+        LPDIRECT3DDEVICE9               pDevice,
+        HMODULE                         hSrcModule,
+        LPCSTR                          pSrcResource,
+        CONST D3DXMACRO*                pDefines,
+        LPD3DXINCLUDE                   pInclude,
+        LPCSTR                          pSkipConstants, 
+        DWORD                           Flags,
+        LPD3DXEFFECTPOOL                pPool,
+        LPD3DXEFFECT*                   ppEffect,
+        LPD3DXBUFFER*                   ppCompilationErrors);
+
+HRESULT WINAPI
+    D3DXCreateEffectFromResourceExW(
+        LPDIRECT3DDEVICE9               pDevice,
+        HMODULE                         hSrcModule,
+        LPCWSTR                         pSrcResource,
+        CONST D3DXMACRO*                pDefines,
+        LPD3DXINCLUDE                   pInclude,
+        LPCSTR                          pSkipConstants, 
+        DWORD                           Flags,
+        LPD3DXEFFECTPOOL                pPool,
+        LPD3DXEFFECT*                   ppEffect,
+        LPD3DXBUFFER*                   ppCompilationErrors);
+
+#ifdef UNICODE
+#define D3DXCreateEffectFromResourceEx D3DXCreateEffectFromResourceExW
+#else
+#define D3DXCreateEffectFromResourceEx D3DXCreateEffectFromResourceExA
+#endif
+
+
+HRESULT WINAPI
+    D3DXCreateEffectEx(
+        LPDIRECT3DDEVICE9               pDevice,
+        LPCVOID                         pSrcData,
+        UINT                            SrcDataLen,
+        CONST D3DXMACRO*                pDefines,
+        LPD3DXINCLUDE                   pInclude,
+        LPCSTR                          pSkipConstants, 
+        DWORD                           Flags,
+        LPD3DXEFFECTPOOL                pPool,
+        LPD3DXEFFECT*                   ppEffect,
+        LPD3DXBUFFER*                   ppCompilationErrors);
 
 //----------------------------------------------------------------------------
 // D3DXCreateEffectCompiler:

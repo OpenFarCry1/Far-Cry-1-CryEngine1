@@ -26,6 +26,7 @@
 //////////////////////////////////////////////////////////////////////////
 #define _NOTHREADS
 #define _STLP_NO_THREADS
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 //////////////////////////////////////////////////////////////////////////
 
 #include <platform.h>
@@ -151,7 +152,9 @@ inline int __cdecl strnicmp (const char * first, const char * last, size_t count
 class  IPhysicalWorld;
 struct IEntityRender;
 
-#if defined(WIN32) && defined(_DEBUG)
+//#define DEBUG_MEMORY
+
+#if defined(WIN32) && defined(DEBUG_MEMORY)
 
 #include <crtdbg.h>
 #define DEBUG_NEW_NORMAL_CLIENTBLOCK(file, line) new(_NORMAL_BLOCK, file, line)

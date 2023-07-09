@@ -4477,6 +4477,15 @@ void *gGet_glReadPixels()
   return NULL;
 }
 
+namespace ATL
+{
+    int __cdecl _AtlInitializeCriticalSectionEx(struct _RTL_CRITICAL_SECTION*, unsigned long, unsigned long)
+    {
+        return 0;
+    }
+}
+
+
 //=========================================================================================
 
 //=========================================================================================

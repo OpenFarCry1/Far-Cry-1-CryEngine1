@@ -47,7 +47,7 @@
 #define D3DX_16F_MAX_EXP      15               // max binary exponent
 #define D3DX_16F_MIN          6.1035156e-5f    // min positive value
 #define D3DX_16F_MIN_10_EXP   (-4)             // min decimal exponent
-#define D3DX_16F_MIN_EXP      (-12)            // min binary exponent
+#define D3DX_16F_MIN_EXP      (-14)            // min binary exponent
 #define D3DX_16F_RADIX        2                // exponent radix
 #define D3DX_16F_ROUNDS       1                // addition rounding: near
 
@@ -1564,6 +1564,37 @@ FLOAT* WINAPI D3DXSHScale
 
 FLOAT WINAPI D3DXSHDot
     ( UINT Order, CONST FLOAT *pA, CONST FLOAT *pB );
+
+//============================================================================
+//
+//  D3DXSHMultiply[O]:
+//  --------------------
+//  Computes the product of two functions represented using SH (f and g), where:
+//  pOut[i] = int(y_i(s) * f(s) * g(s)), where y_i(s) is the ith SH basis
+//  function, f(s) and g(s) are SH functions (sum_i(y_i(s)*c_i)).  The order O
+//  determines the lengths of the arrays, where there should always be O^2 
+//  coefficients.  In general the product of two SH functions of order O generates
+//  and SH function of order 2*O - 1, but we truncate the result.  This means
+//  that the product commutes (f*g == g*f) but doesn't associate 
+//  (f*(g*h) != (f*g)*h.
+//
+//  Parameters:
+//   pOut
+//      Output SH coefficients - basis function Ylm is stored at l*l + m+l
+//      This is the pointer that is returned.
+//   pF
+//      Input SH coeffs for first function.
+//   pG
+//      Second set of input SH coeffs.
+//
+//============================================================================
+
+FLOAT* WINAPI D3DXSHMultiply2( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply3( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply4( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply5( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+FLOAT* WINAPI D3DXSHMultiply6( FLOAT *pOut, CONST FLOAT *pF, CONST FLOAT *pG);
+
 
 //============================================================================
 //
