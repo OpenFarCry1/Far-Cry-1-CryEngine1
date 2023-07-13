@@ -1,0 +1,13 @@
+*.obj
+*.htm
+*.sln
+*.suo
+*.pch
+*.pdb
+*.idb
+*.sbr
+*.asm
+*.res
+*.tlh
+*.tli
+*.ncb
