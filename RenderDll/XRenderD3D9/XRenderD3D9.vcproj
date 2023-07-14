@@ -108,7 +108,7 @@
 				EnableFiberSafeOptimizations="FALSE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="..\DX9SDK\Include;..\..\CryCommon"
-				PreprocessorDefinitions="ENABLE_FRAME_PROFILER;COMP_VC;DO_ASM;DIRECT3D9;OS_WIN32;PROC_INTEL;WIN32;NDEBUG;_WINDOWS;_USRDLL;XRENDERD3D9_EXPORTS;DO_RENDERLOG;DO_RENDERSTATS;_RENDERER"
+				PreprocessorDefinitions="_RELEASE;COMP_VC;DO_ASM;DIRECT3D9;OS_WIN32;PROC_INTEL;WIN32;NDEBUG;_WINDOWS;_USRDLL;XRENDERD3D9_EXPORTS;_RENDERER"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
 				BufferSecurityCheck="FALSE"
@@ -123,7 +123,7 @@
 				ProgramDataBaseFileName=".\Profile/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -134,7 +134,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="..\DX9SDK\Lib;Libraries"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				BaseAddress="0x38000000"/>
 			<Tool
 				Name="VCMIDLTool"
