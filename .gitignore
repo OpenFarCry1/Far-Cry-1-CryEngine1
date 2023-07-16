@@ -11,3 +11,6 @@
 *.tlh
 *.tli
 *.ncb
+*.exp
+*.lib
+*.map
