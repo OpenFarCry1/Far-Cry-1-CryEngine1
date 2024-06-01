@@ -50,9 +50,11 @@
 #include "d3dx9mesh.h"
 #include "d3dx9shader.h"
 #include "d3dx9effect.h"
+
 #include "d3dx9tex.h"
 #include "d3dx9shape.h"
 #include "d3dx9anim.h"
+
 
 
 // Errors

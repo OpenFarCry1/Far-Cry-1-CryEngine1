@@ -10,6 +10,7 @@
 //////////////////////////////////////////////////////////////////////////
 #define _NOTHREADS
 #define _STLP_NO_THREADS
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 //////////////////////////////////////////////////////////////////////////
 
 // if UNIQUE_VERT_BUFF_PER_INSTANCE defined - every instance will have unique vertex buffer (default state for now)
@@ -22,7 +23,7 @@
 // if UNIQUE_VERT_BUFF_PER_INSTANCE not defined - only every model will use unique vertex buffer
 // works much slower now, especially with reflections. shadow maps not supported now.
 // buffer waiting can be optimized: cycle thru 4-8 vertex buffers (for all models)
-#define UNIQUE_VERT_BUFF_PER_INSTANCE
+//#define UNIQUE_VERT_BUFF_PER_INSTANCE
 
 
 #ifdef _XBOX

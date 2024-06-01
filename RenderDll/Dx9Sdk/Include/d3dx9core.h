@@ -20,11 +20,12 @@
 // application was built against the correct header files and lib files. 
 // This number is incremented whenever a header (or other) change would 
 // require applications to be rebuilt. If the version doesn't match, 
-// D3DXCreateVersion will return FALSE. (The number itself has no meaning.)
+// D3DXCheckVersion will return FALSE. (The number itself has no meaning.)
 ///////////////////////////////////////////////////////////////////////////
 
 #define D3DX_VERSION 0x0902
-#define D3DX_SDK_VERSION 22
+
+#define D3DX_SDK_VERSION 43
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +38,26 @@ BOOL WINAPI
 }
 #endif //__cplusplus
 
+
+
+///////////////////////////////////////////////////////////////////////////
+// D3DXDebugMute
+//    Mutes D3DX and D3D debug spew (TRUE - mute, FALSE - not mute)
+//
+//  returns previous mute value
+//
+///////////////////////////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
+BOOL WINAPI
+    D3DXDebugMute(BOOL Mute);  
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -126,6 +147,9 @@ DECLARE_INTERFACE_(ID3DXBuffer, IUnknown)
 // D3DXSPRITE_SORT_DEPTH_BACKTOFRONT
 //   Sprites are sorted by depth back-to-front prior to drawing.  This is 
 //   recommended when drawing transparent sprites of varying depths.
+// D3DXSPRITE_DO_NOT_ADDREF_TEXTURE
+//   Disables calling AddRef() on every draw, and Release() on Flush() for
+//   better performance.
 //////////////////////////////////////////////////////////////////////////////
 
 #define D3DXSPRITE_DONOTSAVESTATE               (1 << 0)
@@ -136,6 +160,7 @@ DECLARE_INTERFACE_(ID3DXBuffer, IUnknown)
 #define D3DXSPRITE_SORT_TEXTURE                 (1 << 5)
 #define D3DXSPRITE_SORT_DEPTH_FRONTTOBACK       (1 << 6)
 #define D3DXSPRITE_SORT_DEPTH_BACKTOFRONT       (1 << 7)
+#define D3DXSPRITE_DO_NOT_ADDREF_TEXTURE        (1 << 8)
 
 
 //////////////////////////////////////////////////////////////////////////////

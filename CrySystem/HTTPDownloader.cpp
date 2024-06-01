@@ -305,8 +305,9 @@ int CHTTPDownloader::Download(IFunctionHandler *pH)
 	char *szURL = 0;
 	char *szFileName = 0;
 
-	pH->GetParam(1, szURL);
-	pH->GetParam(2, szFileName);
+	// #TODO: Uncomment !!!
+	//pH->GetParam(1, szURL);
+	//pH->GetParam(2, szFileName);
 
 	if (szURL && szFileName)
 	{

@@ -1826,8 +1826,8 @@ bool CLeafBuffer::CheckUpdate(int VertFormat, int Flags, bool bNeedAddNormals)
       else
       if (!lb->m_bOnlyVideoBuffer)
       {
-        assert(lb->m_pSecVertBuffer);
-        if (lb->m_pSecVertBuffer->m_vertexformat != RequestedVertFormat)
+        //assert(lb->m_pSecVertBuffer);
+        if (lb->m_pSecVertBuffer && lb->m_pSecVertBuffer->m_vertexformat != RequestedVertFormat)
         {
           PROFILE_FRAME(Mesh_CheckUpdateRecreateSystem);
           lb->ReCreateSystemBuffer(RequestedVertFormat);

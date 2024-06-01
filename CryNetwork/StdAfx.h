@@ -16,6 +16,9 @@
 //////////////////////////////////////////////////////////////////////////
 #define _NOTHREADS
 #define _STLP_NO_THREADS
+
+// #TODO: !!!
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 //////////////////////////////////////////////////////////////////////////
 
 #include <platform.h>
@@ -44,6 +47,8 @@
 // TODO: reference additional headers your program requires here
 
 
+#define NOT_USE_UBICOM_SDK
+//#define NOT_USE_PUNKBUSTER_SDK
 
 #if defined(_DEBUG) && !defined(LINUX)
 #include <crtdbg.h>

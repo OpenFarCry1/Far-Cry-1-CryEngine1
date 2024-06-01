@@ -8,6 +8,8 @@
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #include <stdio.h>
 
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
+
 #if !defined(LINUX)
 	#include <tchar.h>
 #else
