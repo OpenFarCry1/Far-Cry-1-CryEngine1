@@ -15,7 +15,7 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="D:\Games\FC\Bin32"
+			OutputDirectory="..\..\..\..\..\OpenFC"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -51,7 +51,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile=".\Release/CryFont.dll"
+				OutputFile="$(OutDir)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				ProgramDatabaseFile=".\Release/CryFont.pdb"
@@ -117,7 +117,7 @@
 				ProgramDataBaseFileName=".\Profile/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -125,7 +125,7 @@
 				Name="VCLinkerTool"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				BaseAddress="0x32500000"/>
 			<Tool
 				Name="VCMIDLTool"

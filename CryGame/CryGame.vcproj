@@ -84,7 +84,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="D:\Games\FC\Bin32"
+			OutputDirectory="..\..\..\..\..\OpenFC"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -122,7 +122,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="Shlwapi.lib wininet.lib Ws2_32.lib"
-				OutputFile=".\Release/CryGame.dll"
+				OutputFile="$(OutDir)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="..\BinkSDK;..\CryNetwork\Release;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-regserver/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-msclient/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-common/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-base/lib_win32&quot;;&quot;..\ubisoft.com\GSServices\sdks\gs-sdk-cdkey\lib_win32&quot;"
@@ -192,7 +192,7 @@
 				ProgramDataBaseFileName=".\Profile/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -205,7 +205,7 @@
 				AdditionalLibraryDirectories="..\BinkSDK;..\CryNetwork\Release;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-regserver/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-msclient/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-result/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-cdkey/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-common/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-base/lib_win32&quot;"
 				IgnoreAllDefaultLibraries="FALSE"
 				IgnoreDefaultLibraryNames="libcmt.lib"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				BaseAddress="0x33000000"/>
 			<Tool
 				Name="VCMIDLTool"

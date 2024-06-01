@@ -68,7 +68,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="D:\Games\FC\Bin32"
+			OutputDirectory="..\..\..\..\..\OpenFC"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			CharacterSet="2">
@@ -90,6 +90,9 @@
 				EnableFunctionLevelLinking="FALSE"
 				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="3"
+				AssemblerListingLocation=".\Release/"
+				ObjectFile=".\Release/"
+				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="3"/>
@@ -100,10 +103,12 @@
 				OutputFile="$(OutDir)/Cry3DEngine.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile=".\Release/Cry3DEngine.pdb"
 				SubSystem="0"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				BaseAddress="0x20000000"
+				ImportLibrary="$(IntDir)/$(TargetName).lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -153,13 +158,13 @@
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
-				DebugInformationFormat="3"/>
+				DebugInformationFormat="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				SubSystem="0"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

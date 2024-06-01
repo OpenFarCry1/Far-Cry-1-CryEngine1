@@ -15,7 +15,7 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="D:\Games\FC\Bin32"
+			OutputDirectory="..\..\..\..\..\OpenFC"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -52,7 +52,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="ogg_static.lib vorbis_static.lib vorbisfile_static.lib"
-				OutputFile=".\Release/CrySoundSystem.dll"
+				OutputFile="$(OutDir)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				ProgramDatabaseFile=".\Release/CrySoundSystem.pdb"
@@ -117,7 +117,7 @@
 				ProgramDataBaseFileName=".\Profile/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -127,7 +127,7 @@
 				AdditionalDependencies="ogg_static.lib vorbis_static.lib vorbisfile_static.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				BaseAddress="0x36000000"/>
 			<Tool
 				Name="VCMIDLTool"

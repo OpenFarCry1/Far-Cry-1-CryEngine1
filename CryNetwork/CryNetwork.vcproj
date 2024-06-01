@@ -84,7 +84,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="D:\Games\FC\Bin32"
+			OutputDirectory="..\..\..\..\..\OpenFC"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -122,7 +122,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="winmm.lib wininet.lib Wsock32.lib Ws2_32.lib"
-				OutputFile=".\Release/CryNetwork.dll"
+				OutputFile="$(OutDir)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				IgnoreDefaultLibraryNames="libcmt.lib"
@@ -189,7 +189,7 @@
 				ProgramDataBaseFileName=".\Profile/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -201,7 +201,7 @@
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-regserver/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-msclient/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-common/lib_win32&quot;;&quot;.\..\ubisoft.com\GSServices\sdks/gs-sdk-base/lib_win32&quot;;&quot;..\ubisoft.com\GSServices\sdks\gs-sdk-cdkey\lib_win32&quot;"
 				IgnoreDefaultLibraryNames="libcmt.lib"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				BaseAddress="0x34500000"/>
 			<Tool
 				Name="VCMIDLTool"

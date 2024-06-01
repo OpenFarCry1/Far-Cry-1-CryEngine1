@@ -79,7 +79,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="D:\Games\FC\Bin32"
+			OutputDirectory="..\..\..\..\..\OpenFC"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -116,16 +116,17 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile=".\Release/CryScriptSystem.dll"
+				OutputFile="$(OutDir)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				ProgramDatabaseFile=".\Release/CryScriptSystem.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName="$(TargetDir)\map.map"
-				MapExports="TRUE"
-				MapLines="TRUE"
+				GenerateMapFile="FALSE"
+				MapFileName=""
+				MapExports="FALSE"
+				MapLines="FALSE"
 				SubSystem="2"
-				BaseAddress="0x34000000"/>
+				BaseAddress="0x34000000"
+				ImportLibrary="$(IntDir)/$(TargetName).lib"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG;CRYXMLDOM_EXPORTS"
@@ -187,7 +188,7 @@
 				ProgramDataBaseFileName=".\Profile/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -197,7 +198,7 @@
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="FALSE"
 				SubSystem="2"
 				BaseAddress="0x35500000"/>
 			<Tool
